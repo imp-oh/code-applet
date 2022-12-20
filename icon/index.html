@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>icon图标转换器</title>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      text-align: center;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    .uploadImg {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    input {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      opacity: 0;
+      position: absolute;
+      cursor: pointer;
+      left: 0;
+    }
+
+    .box {
+      display: block;
+      border: 1px dashed #409eff;
+      border-radius: 6px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      height: calc(100% - 30px);
+      margin: 10px 20px 0;
+    }
+
+    .box img {
+      position: absolute;
+      z-index: 0;
+      width: 48px;
+      height: 48px;
+      top: 50%;
+      left: 50%;
+      margin-top: -24px;
+      margin-left: -24px;
+    }
+
+    .box .title {
+      position: absolute;
+      z-index: 0;
+      bottom: 30px;
+      width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: #5e6d82;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="uploadImg">
+    <input type="file" name="file" id="file" accept="image/x-png">
+    <div style="clear: both"></div>
+    <div class="box">
+      <img src="./add.png" alt="">
+      <div class="title">可以拖拽文件上传</div>
+    </div>
+  </div>
+  <script>
+    let toIco = require('to-ico')
+    let fs = require('fs')
+    let path = require('path')
+    let {
+      ipcRenderer
+    } = require('electron')
+
+    let elFile = document.getElementById("file")
+    let state = false;
+
+
+
+    let handleSuccess = async (filePath) => {
+      try {
+        let buf = await toIco(fs.readFileSync(filePath), {
+          resize: true
+        })
+        let filePathSync = ipcRenderer.sendSync('dialog', {
+          title: "选择保存位置",
+          buttonLabel: "确定",
+          properties: ['openDirectory'],
+          filters: [{
+            name: 'Custom File Type',
+            extensions: ['ico']
+          }]
+        })
+
+        if (filePathSync) fs.writeFileSync(filePathSync, buf)
+      } catch (error) {
+        ipcRenderer.sendSync('showErrorBox', error)
+      }
+    }
+
+
+    document.body.ondragenter = (e) => {
+      console.log('ondragenter-1')
+      state = true
+    }
+    document.body.ondragover = (e) => {
+      console.log('ondragover-2')
+    }
+    document.body.ondragleave = (e) => {
+      console.log('ondragleave-3')
+    }
+    document.body.ondrop = (e) => {
+      console.log('ondrop-4')
+      if (e.dataTransfer.files.length === 0) return
+
+      let files = e.dataTransfer.files[0]
+      let extname = path.extname(files.path)
+      let ext = ['.png', '.PNG']
+      if (!ext.includes(extname)) return ipcRenderer.sendSync('showErrorBox', '只支持后缀.png')
+      handleSuccess(files.path)
+    }
+
+
+    elFile.onchange = async (e) => {
+      if (e.currentTarget.files.length === 0 || state) return e.preventDefault();
+      let filePath = e.currentTarget.files[0].path
+      await handleSuccess(filePath)
+    }
+  </script>
+
+</body>
+
+</html>

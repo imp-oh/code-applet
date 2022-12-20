@@ -1,0 +1,19 @@
+{
+	"name": "ico",
+	"version": "1.0.2",
+	"icon": "./icon.ico",
+	"shortcutName": "png转ico",
+	"description": "用于图标转换，png 转ico格式",
+	"main": "index.js",
+	"appid": "ico.codeengine.top",
+	"author": "",
+	"license": "ISC",
+	"scripts": {
+		"serve": "chcp 65001 && ce .",
+		"build": "ce build"
+	},
+	"keywords": [],
+	"dependencies": {
+		"to-ico": "^1.1.5"
+	}
+}
